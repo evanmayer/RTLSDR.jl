@@ -114,15 +114,12 @@ function rtlsdr_set_tuner_gain(rf::Ref{rtlsdr_dev}, gain)
 end
 
 function rtlsdr_get_tuner_gain(rf::Ref{rtlsdr_dev})
-    gain = Array{Cint,1}(undef,1)
-    ret = ccall( (:rtlsdr_get_tuner_gain, "librtlsdr"),
+    gain = ccall( (:rtlsdr_get_tuner_gain, "librtlsdr"),
                  Cint,
-                 (Ref{rtlsdr_dev},Ptr{Cint}),
-                 rf,
-                 gain
+                 (Ref{rtlsdr_dev},),
+                 rf
                )
-    if ret != 0; throw(RTLSDRError("RTLSDR.jl reports: Error getting tuner gain (error code $ret).")); end
-    return gain[1]
+    return gain
 end
 
 

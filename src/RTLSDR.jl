@@ -15,6 +15,8 @@ export
     set_rate,
     get_freq,
     set_freq,
+    get_gain,
+    set_gain,
     set_agc_mode,
     set_tuner_gain_mode
 
@@ -71,6 +73,24 @@ function get_freq(r::RtlSdr)
     @assert r.valid_ptr
     freq = rtlsdr_get_center_freq(r.dongle_ptr)
     return Int(freq)
+end
+
+"""
+`set_gain(r::RtlSdr, gain_db)`
+
+Interface for `rtlsdr_set_tuner_gain`.
+"""
+function set_gain(r::RtlSdr, gain_db)
+    @assert r.valid_ptr
+    # TODO: Get valid tuner gains from librtlsdr and round user input
+    # For r82xx, librtlsdr steps through gains in predetermined
+    # steps until tuner gain >= setpoint. Works, but doesn't give what    # user might expect.
+    rtlsdr_set_tuner_gain(r.dongle_ptr, gain_db)
+end
+function get_gain(r::RtlSdr)
+    @assert r.valid_ptr
+    gain = rtlsdr_get_tuner_gain(r.dongle_ptr)
+    return gain
 end
 
 """
