@@ -15,6 +15,7 @@ export
     set_rate,
     get_freq,
     set_freq,
+    get_gains,
     get_gain,
     set_gain,
     set_agc_mode,
@@ -76,21 +77,32 @@ function get_freq(r::RtlSdr)
 end
 
 """
+`get_gains(r::RtlSdr)`
+
+Interface for `rtlsdr_get_tuner_gains`.
+Gains are in tenths of a dB.
+"""
+function get_gains(r::RtlSdr)
+    @assert r.valid_ptr
+    return rtlsdr_get_tuner_gains(r.dongle_ptr)
+end
+
+"""
 `set_gain(r::RtlSdr, gain_db)`
 
 Interface for `rtlsdr_set_tuner_gain`.
 """
 function set_gain(r::RtlSdr, gain_db)
     @assert r.valid_ptr
-    # TODO: Get valid tuner gains from librtlsdr and round user input
-    # For r82xx, librtlsdr steps through gains in predetermined
-    # steps until tuner gain >= setpoint. Works, but doesn't give what    # user might expect.
-    rtlsdr_set_tuner_gain(r.dongle_ptr, gain_db)
+    # Implement rounding, taking after roger-'s pyrtlsdr
+    avail_gains = get_gains(r)
+    errors = [abs((10 * gain_db) - avail_gain) for avail_gain in get_gains(r)]
+    closest_gain_idx = findall(errors .== minimum(errors))[1] # broadcast find
+    rtlsdr_set_tuner_gain(r.dongle_ptr, avail_gains[closest_gain_idx])
 end
 function get_gain(r::RtlSdr)
     @assert r.valid_ptr
-    gain = rtlsdr_get_tuner_gain(r.dongle_ptr)
-    return gain
+    return rtlsdr_get_tuner_gain(r.dongle_ptr) / 10
 end
 
 """

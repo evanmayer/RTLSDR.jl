@@ -83,26 +83,6 @@ function rtlsdr_set_sample_rate(rf::Ref{rtlsdr_dev}, sample_rate)
 end
 
 # gain
-function rtlsdr_set_agc_mode(rf::Ref{rtlsdr_dev}, on)
-    ret = ccall( (:rtlsdr_set_tuner_gain, "librtlsdr"),
-                 Cint,
-                 (Ref{rtlsdr_dev},Cint),
-                 rf, 
-                 on
-                )
-    if ret != 0; throw(RTLSDRError("RTLSDR.jl reports: Error setting AGC mode (error code $ret).")); end
-end
-
-function rtlsdr_set_tuner_gain_mode(rf::Ref{rtlsdr_dev}, manual)
-    ret = ccall( (:rtlsdr_set_tuner_gain_mode, "librtlsdr"),
-                 Cint,
-                 (Ref{rtlsdr_dev},Cint),
-                 rf,
-                 manual
-               )
-    if ret != 0; throw(RTLSDRError("RTLSDR.jl reports: Error setting tuner gain mode (error code $ret).")); end
-end
-
 function rtlsdr_set_tuner_gain(rf::Ref{rtlsdr_dev}, gain)
     ret = ccall( (:rtlsdr_set_tuner_gain, "librtlsdr"),
                  Cint,
@@ -119,10 +99,48 @@ function rtlsdr_get_tuner_gain(rf::Ref{rtlsdr_dev})
                  (Ref{rtlsdr_dev},),
                  rf
                )
-    return gain
+    return gain[1]
 end
 
+function rtlsdr_get_tuner_gains(rf::Ref{rtlsdr_dev})
+    buf = Vector{Cint}(undef, 50) # max 50 gain settings. no RTL has this many.
+    num_gains = ccall( (:rtlsdr_get_tuner_gains, "librtlsdr"),
+                 Cint,
+                 (Ref{rtlsdr_dev}, Ref{Cint}),
+                 rf,
+                 buf
+                )
+    if num_gains == 0
+        throw(RTLSDRError("RTLSDR.jl reports: Error getting gains."))
+    end
+    avail_gains = Vector{Int32}(undef, num_gains)
+    for i = 1:num_gains
+        avail_gains[i] = buf[i]
+    end
+    return avail_gains
+end
 
+function rtlsdr_set_tuner_gain_mode(rf::Ref{rtlsdr_dev}, manual)
+    ret = ccall( (:rtlsdr_set_tuner_gain_mode, "librtlsdr"),
+                 Cint,
+                 (Ref{rtlsdr_dev},Cint),
+                 rf,
+                 manual
+               )
+    if ret != 0; throw(RTLSDRError("RTLSDR.jl reports: Error setting tuner gain mode (error code $ret).")); end
+end
+
+function rtlsdr_set_agc_mode(rf::Ref{rtlsdr_dev}, on)
+    ret = ccall( (:rtlsdr_set_tuner_gain, "librtlsdr"),
+                 Cint,
+                 (Ref{rtlsdr_dev},Cint),
+                 rf, 
+                 on
+                )
+    if ret != 0; throw(RTLSDRError("RTLSDR.jl reports: Error setting AGC mode (error code $ret).")); end
+end
+
+# reading
 function read_bytes(rf::Ref{rtlsdr_dev}, num_bytes)
     buf = Vector{Cuchar}(undef,num_bytes)
     bytes_read = Ref{Cint}(0)
