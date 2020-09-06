@@ -27,8 +27,8 @@ mutable struct RtlSdr
     valid_ptr::Bool
     dongle_ptr::Ptr{rtlsdr_dev}
 
-    function RtlSdr()
-        dp = rtlsdr_open()
+    function RtlSdr(index::Int64=0)
+        dp = rtlsdr_open(index)
 
         r = new(true, dp)
 

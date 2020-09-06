@@ -11,8 +11,7 @@ mutable struct RTLSDRError <: Exception
 end
 
 # returns a pointer to 
-function rtlsdr_open()
-    index = 0
+function rtlsdr_open(index::Int64=0)
     rd = Array{Ptr{rtlsdr_dev},1}(undef,1)
     ret = ccall( (:rtlsdr_open, "librtlsdr"),
                  Cint,
